@@ -12,6 +12,8 @@
 
 namespace priori{
 
+	std::pair<int, int> getHilbertPosition(unsigned int position, unsigned int order);
+
 	template<class T>
 	struct HilbertIterator;
 
