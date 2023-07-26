@@ -12,7 +12,7 @@
 
 namespace priori{
 
-	std::pair<int, int> getHilbertPosition(unsigned int position, unsigned int order);
+	std::pair<int, int> getHilbertPosition(unsigned int position, int order);
 
 	template<class T>
 	struct HilbertIterator;
@@ -23,15 +23,47 @@ namespace priori{
 		T** matrix;
 		unsigned int length, order;
 
-		HilbertCurve(int length);
-		HilbertCurve(T* arr, int length);
-		~HilbertCurve();
+		HilbertCurve(int length) : length(length){
+			int size = 1;
+			while(size*size < length)
+				size *= 2;
 
-		HilbertIterator<T> begin();
-		HilbertIterator<T> end();
+			matrix = new T*[size];
+			for(int i = 0; i < size; i++)
+				matrix[i] = new T[size];
 
-		T& get(int pos);
-		T& operator[](int pos);
+			order = log2(size);
+		}
+
+		HilbertCurve(T* arr, int length) : HilbertCurve(length){
+			auto it = begin();
+			for(int i = 0; i < length; i++)
+				*it++ = arr[i];
+		}
+
+		~HilbertCurve(){
+			int size = pow(2, order);
+			for(int i = 0; i < size; i++)
+				delete[] matrix[i];
+			delete[] matrix;
+		}
+
+		HilbertIterator<T> begin(){
+			return HilbertIterator<T>{this, 0};
+		}
+
+		HilbertIterator<T> end(){
+			return HilbertIterator<T>{this, length};
+		}
+
+		T& get(int pos){
+			auto coord = getHilbertPosition(pos, order);
+			return matrix[coord.first][coord.second];
+		}
+
+		T& operator[](int pos){
+			return get(pos);
+		}
 	};
 
 	template<class T>
@@ -42,34 +74,103 @@ namespace priori{
 		using pointer = T*;
 		using reference = T&;
 
-		HilbertCurve<T> curve;
+		HilbertCurve<T>* curve;
 		unsigned int pos;
 
-		HilbertIterator();
-		HilbertIterator(HilbertCurve<T>* curve, unsigned int pos);
+		HilbertIterator() : curve(nullptr), pos(0){}
+		HilbertIterator(HilbertCurve<T>* curve, unsigned int pos) : curve(curve), pos(pos){}
 
-		T& operator*() const;
-		T* operator->();
-		T& operator[](int n);
+		T& operator*() const{
+			return curve->get(pos);
+		}
 
-		bool operator==(const HilbertIterator<T> &other) const;
-		bool operator!=(const HilbertIterator<T> &other) const;
-		bool operator<(const HilbertIterator<T> &other) const;
-		bool operator<=(const HilbertIterator<T> &other) const;
-		bool operator>(const HilbertIterator<T> &other) const;
-		bool operator>=(const HilbertIterator<T> &other) const;
+		T* operator->(){
+			return &curve->get(pos);
+		}
 
-		HilbertIterator<T>& operator++();
-		HilbertIterator<T>& operator++(int);
-		HilbertIterator<T>& operator--();
-		HilbertIterator<T>& operator--(int);
+		T& operator[](int n){
+			return curve->get(pos+n);
+		}
 
-		HilbertIterator<T> operator+(int n);
-		template<T> friend HilbertIterator<T> operator+(int n, const HilbertIterator<T> it);
-		HilbertIterator<T>& operator+=(int n);
-		HilbertIterator<T> operator-(int n);
-		template<T> friend HilbertIterator<T> operator-(int n, const HilbertIterator<T> it);
-		HilbertIterator<T>& operator-=(int n);
+		bool operator==(const HilbertIterator<T> &other) const{
+			return curve == other.curve && pos == other.pos;
+		}
+
+		bool operator!=(const HilbertIterator<T> &other) const{
+			return curve != other.curve && pos != other.pos;
+		}
+
+		bool operator<(const HilbertIterator<T> &other) const{
+			return curve == other.curve && pos < other.pos;
+		}
+
+		bool operator<=(const HilbertIterator<T>& other) const{
+			return curve == other.curve && pos <= other.pos;
+		}
+
+		bool operator>(const HilbertIterator<T> &other) const{
+			return curve == other.curve && pos > other.pos;
+		}
+
+		bool operator>=(const HilbertIterator<T>& other) const{
+			return curve == other.curve && pos >= other.pos;
+		}
+
+		HilbertIterator<T>& operator++(){
+			pos++;
+			return *this;
+		}
+
+		HilbertIterator<T>& operator++(int){
+			HilbertIterator<T> temp = *this;
+			pos++;
+			return temp;
+		}
+
+		HilbertIterator<T>& operator--(){
+			pos--;
+			return *this;
+		}
+
+		HilbertIterator<T>& operator--(int){
+			HilbertIterator<T> out = *this;
+			pos--;
+			return out;
+		}
+
+		HilbertIterator<T> operator+(int n){
+			HilbertIterator<T> out = *this;
+			out.pos += n;
+			return out;
+		}
+
+		friend HilbertIterator<T> operator+(int n, const HilbertIterator<T> it){
+			HilbertIterator<T> out = it;
+			out.pos += n;
+			return out;
+		}
+
+		HilbertIterator<T>& operator+=(int n){
+			pos += n;
+			return *this;
+		}
+
+		HilbertIterator<T> operator-(int n){
+			HilbertIterator<T> out = *this;
+			out.pos -= n;
+			return out;
+		}
+
+		friend HilbertIterator<T> operator-(int n, const HilbertIterator<T> it){
+			HilbertIterator<T> out = it;
+			out.pos -= n;
+			return out;
+		}
+
+		HilbertIterator<T>& operator-=(int n){
+			pos -= n;
+			return *this;
+		}
 	};
 
 }
