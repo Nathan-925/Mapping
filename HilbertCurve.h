@@ -11,6 +11,8 @@
 #include <iterator>
 #include <cmath>
 
+#include "priori/Graphical.h"
+
 namespace priori{
 
 	std::pair<int, int> getHilbertPosition(unsigned int position, int order);
@@ -66,6 +68,15 @@ namespace priori{
 
 		T& operator[](int pos){
 			return get(pos);
+		}
+
+		priori::Image draw(priori::Color (*function)(T arg)){
+			int size = pow(2, order);
+			Image img(size, size);
+			for(int i = 0; i < size; i++)
+				for(int j = 0; j < size; j++)
+					img[i][j] = function(matrix[i][j]);
+			return img;
 		}
 	};
 
