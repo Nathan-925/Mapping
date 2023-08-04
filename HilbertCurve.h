@@ -9,10 +9,35 @@
 #define PRIORI_MAPPING_HILBERTCURVE_H_
 
 #include <iterator>
+#include <cmath>
 
 namespace priori{
 
-	std::pair<int, int> getHilbertPosition(unsigned int position, int order);
+	std::pair<int, int> getHilbertPosition(unsigned int position, int order){
+		auto out = std::make_pair(0, 0);
+		for(int i = 0; i < order; i++){
+			int orderSize = pow(2, i);
+			int orderPos = position&3;
+
+			switch(orderPos){
+			case 2:
+				out.first += orderSize;
+				//no break
+			case 1:
+				out.second += orderSize;
+				break;
+			case 3:
+				out.first = orderSize-1-out.first;
+				out.second = 2*orderSize-1-out.second;
+				//no break
+			case 0:
+				std::swap(out.first, out.second);
+			}
+			position >>= 2;
+		}
+
+		return out;
+	}
 
 	template<class T>
 	struct HilbertIterator;
@@ -37,8 +62,10 @@ namespace priori{
 
 		HilbertCurve(T* arr, int length) : HilbertCurve(length){
 			auto it = begin();
-			for(int i = 0; i < length; i++)
-				*it++ = arr[i];
+			for(int i = 0; i < length; i++){
+				*it = arr[i];
+				it++;
+			}
 		}
 
 		~HilbertCurve(){
